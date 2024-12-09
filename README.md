@@ -38,6 +38,19 @@ And one that prints `Hello world!`:
 ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
 ```
 
+# Optimisations
+
+The interpreter performs three key optimisations prior to runtime:
+
+- Folding consecutive increment or decrement instructions
+- Folding consecutive move instructions
+- Resolving jump locations
+
+This is enough to provide a ~3.5x boost in performance, as seen with [`examples/mandelbrot.b`](/examples/mandelbrot.b):
+
+- Without optimisations: 21.62s
+- With optimisations: 6.1s
+
 # License
 
 This project is licensed under the [MIT License](/LICENSE). Do whatever you want with it.

@@ -1,8 +1,9 @@
-pub mod parse;
+mod parse;
+mod resolve;
 
 use std::io::Read;
 
-use parse::{Jump, Op, Parser};
+use parse::{Jump, Op};
 
 const RAM_SIZE: usize = 30_000;
 const DEBUG_RANGE: usize = 5;
@@ -31,25 +32,25 @@ impl Cpu {
         let mut i = 0;
         while i < ops.len() {
             match ops[i] {
-                Op::Increment => {
-                    self.ram[self.pc] = self.ram[self.pc].wrapping_add(1);
+                Op::Increment(i) => {
+                    self.ram[self.pc] =
+                        self.ram[self.pc].wrapping_add((i % u8::MAX as usize) as u8);
                 }
-                Op::Decrement => {
-                    self.ram[self.pc] = self.ram[self.pc].wrapping_sub(1);
+                Op::Decrement(i) => {
+                    self.ram[self.pc] =
+                        self.ram[self.pc].wrapping_sub((i % u8::MAX as usize) as u8);
                 }
-                Op::MoveR => {
-                    self.pc += 1;
-                    if self.pc == RAM_SIZE {
-                        panic!("attempting to move past the last memory cell at instruction {i}");
+                Op::MoveR(i) => {
+                    self.pc += i;
+                    if self.pc >= RAM_SIZE {
+                        panic!("attempting to move past the last memory cell");
                     }
                 }
-                Op::MoveL => {
-                    if self.pc == 0 {
-                        panic!(
-                            "attempting to move behind the first memory cell at instruction {i}"
-                        );
-                    }
-                    self.pc -= 1;
+                Op::MoveL(i) => {
+                    self.pc = self
+                        .pc
+                        .checked_sub(i)
+                        .expect("attempting to move behind the first memory cell");
                 }
                 Op::Jump(Jump::JumpR(r)) => {
                     if self.ram[self.pc] == 0 {
@@ -75,6 +76,9 @@ impl Cpu {
                 }
                 Op::Debug => {
                     self.debug();
+                }
+                Op::Empty => {
+                    unreachable!("this should never have made it past the optimisations")
                 }
             }
             i += 1;
@@ -111,6 +115,7 @@ impl Cpu {
 }
 
 pub fn run(src: &str, cpu: &mut Cpu) {
-    let ops = Parser::parse(src);
+    let mut ops = parse::parse(src);
+    resolve::resolve(&mut ops);
     cpu.exec(ops);
 }

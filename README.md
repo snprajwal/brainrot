@@ -46,10 +46,21 @@ The interpreter performs three key optimisations prior to runtime:
 - Folding consecutive move instructions
 - Resolving jump locations
 
-This is enough to provide a ~3.5x boost in performance, as seen with [`examples/mandelbrot.b`](/examples/mandelbrot.b):
+Significant improvement in execution time is seen, particularly for the more complicated `mandelbrot.b` (~3.5x) and `hanoi.b` (~1.9x):
 
-- Without optimisations: 21.62s
-- With optimisations: 6.1s
+| Example        | Unoptimised | Optimised  |
+|----------------|-------------|------------|
+| `sierpinski.b` | 0.0028s     | 0.0024s    |
+| `numwarp.b`    | 0.0022s     | 0.0021s    |
+| `beer.b`       | 0.0062s     | 0.0051s    |
+| `golden.b`     | 0.1758s     | 0.1356s    |
+| `hanoi.b`      | 13.5071s    | 7.1403s    |
+| `bootstrap.b`  | 20.3662s    | 15.1928s   |
+| `mandelbrot.b` | 21.9095s    | 6.2807s    |
+
+# Benchmark
+
+The example programs can be benchmarked with the [`bench/bench.sh`](bench/bench.sh) script. It requires the path to the interpreter or compiler binary as an argument.
 
 # License
 

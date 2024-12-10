@@ -77,6 +77,9 @@ impl Cpu {
                 Op::Debug => {
                     self.debug();
                 }
+                Op::Clear => {
+                    self.ram[self.pc] = 0;
+                }
                 Op::Empty => {
                     unreachable!("this should never have made it past the optimisations")
                 }

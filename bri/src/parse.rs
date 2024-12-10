@@ -8,7 +8,8 @@ pub enum Op {
     Set,
     Get,
     Debug,
-    // Used during optimisation
+    // Introduced by optimisations
+    Clear,
     Empty,
 }
 

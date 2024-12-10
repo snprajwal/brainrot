@@ -40,22 +40,23 @@ And one that prints `Hello world!`:
 
 # Optimisations
 
-The interpreter performs three key optimisations prior to runtime:
+The interpreter performs the below optimisations prior to runtime:
 
 - Folding consecutive increment or decrement instructions
 - Folding consecutive move instructions
+- Rewriting loops that clear a memory cell (`[-]`) into a single instruction
 - Resolving jump locations
 
-Significant improvement in execution time is seen, particularly for the more complicated `mandelbrot.b` (~3.5x) and `hanoi.b` (~1.9x):
+Significant improvement in execution time is seen for the larger programs, with a **24x** speed-up for `hanoi.b`:
 
 | Example        | Unoptimised | Optimised  |
 |----------------|-------------|------------|
-| `sierpinski.b` | 0.0028s     | 0.0024s    |
+| `sierpinski.b` | 0.0028s     | 0.0017s    |
 | `numwarp.b`    | 0.0022s     | 0.0021s    |
-| `beer.b`       | 0.0062s     | 0.0051s    |
+| `beer.b`       | 0.0062s     | 0.0031s    |
 | `golden.b`     | 0.1758s     | 0.1356s    |
-| `hanoi.b`      | 13.5071s    | 7.1403s    |
-| `bootstrap.b`  | 20.3662s    | 15.1928s   |
+| `hanoi.b`      | 13.5071s    | 0.5665s    |
+| `bootstrap.b`  | 20.3662s    | 14.8928s   |
 | `mandelbrot.b` | 21.9095s    | 6.2807s    |
 
 # Benchmark

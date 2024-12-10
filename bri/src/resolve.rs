@@ -5,6 +5,7 @@ use crate::parse::{Jump, Op};
 pub fn resolve(ops: &mut Vec<Op>) {
     fold_consecutive_ops(Op::MoveL, Op::MoveR, ops);
     fold_consecutive_ops(Op::Decrement, Op::Increment, ops);
+    rewrite_clear_loops(ops);
     remove_empty_ops(ops);
     resolve_jumps(ops);
 }
@@ -48,6 +49,29 @@ where
             (start + 1..i).for_each(|i| {
                 ops[i] = Op::Empty;
             });
+        } else {
+            i += 1;
+        }
+    }
+}
+
+/// A loop of the form `[-]` just clears the value of the current memory cell.
+/// This can be optimised to directly set the cell value to zero.
+fn rewrite_clear_loops(ops: &mut [Op]) {
+    let mut i = 0;
+    while let Some([op1, op2, op3]) = ops.get_mut(i..i + 3) {
+        if matches!(
+            (&op1, &op2, &op3),
+            (
+                Op::Jump(Jump::JumpR(_)),
+                Op::Decrement(_),
+                Op::Jump(Jump::JumpL(_))
+            )
+        ) {
+            *op1 = Op::Clear;
+            *op2 = Op::Empty;
+            *op3 = Op::Empty;
+            i += 3;
         } else {
             i += 1;
         }
@@ -154,6 +178,17 @@ mod tests {
         let mut ops = vec![Op::MoveR(1), Op::MoveR(1), Op::MoveL(1), Op::MoveL(1)];
         super::fold_consecutive_ops(Op::MoveL, Op::MoveR, &mut ops);
         assert_eq!(ops, [Op::Empty, Op::Empty, Op::Empty, Op::Empty,]);
+    }
+
+    #[test]
+    fn rewrite_clear_loops() {
+        let mut ops = vec![
+            Op::Jump(Jump::JumpR(0)),
+            Op::Decrement(1),
+            Op::Jump(Jump::JumpL(0)),
+        ];
+        super::rewrite_clear_loops(&mut ops);
+        assert_eq!(ops, [Op::Clear, Op::Empty, Op::Empty,]);
     }
 
     #[test]

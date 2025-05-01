@@ -1,3 +1,4 @@
+mod optimise;
 mod parse;
 mod resolve;
 
@@ -6,7 +7,7 @@ use std::io::Read;
 use parse::{Jump, Op};
 
 const RAM_SIZE: usize = 30_000;
-const DEBUG_RANGE: usize = 5;
+const DEFAULT_DEBUG_RANGE: usize = 5;
 
 #[derive(Debug)]
 pub struct Cpu {
@@ -93,7 +94,7 @@ impl Cpu {
         let debug_range = std::env::var("DEBUG_RANGE")
             .ok()
             .and_then(|r| r.parse().ok())
-            .unwrap_or(DEBUG_RANGE);
+            .unwrap_or(DEFAULT_DEBUG_RANGE);
         let (start, end) = (
             self.pc.saturating_sub(debug_range),
             (self.pc + debug_range + 1).min(RAM_SIZE),
@@ -119,6 +120,9 @@ impl Cpu {
 
 pub fn run(src: &str, cpu: &mut Cpu) {
     let mut ops = parse::parse(src);
-    resolve::resolve(&mut ops);
+    if std::env::var("NO_OPT") == Err(std::env::VarError::NotPresent) {
+        optimise::optimise(&mut ops);
+    }
+    resolve::resolve_jumps(&mut ops);
     cpu.exec(ops);
 }

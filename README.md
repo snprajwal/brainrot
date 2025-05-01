@@ -40,28 +40,30 @@ And one that prints `Hello world!`:
 
 # Optimisations
 
-The interpreter performs the below optimisations prior to runtime:
+The interpreter performs a variety of optimisations before execution:
 
 - Folding consecutive increment or decrement instructions
 - Folding consecutive move instructions
 - Rewriting loops that clear a memory cell (`[-]`) into a single instruction
-- Resolving jump locations
 
 Significant improvement in execution time is seen for the larger programs, with a **24x** speed-up for `hanoi.b`:
 
-| Example        | Unoptimised | Optimised  |
-|----------------|-------------|------------|
-| `sierpinski.b` | 0.0028s     | 0.0017s    |
-| `numwarp.b`    | 0.0022s     | 0.0021s    |
-| `beer.b`       | 0.0062s     | 0.0031s    |
-| `golden.b`     | 0.1758s     | 0.1356s    |
-| `hanoi.b`      | 13.5071s    | 0.5665s    |
-| `bootstrap.b`  | 20.3662s    | 14.8928s   |
-| `mandelbrot.b` | 21.9095s    | 6.2807s    |
+| Example        | Unoptimised | Optimised  | Improvement factor |
+|----------------|-------------|------------|--------------------|
+| `beer.b`       | 0.0062s     | 0.0031s    | 2x                 |
+| `bootstrap.b`  | 20.3662s    | 14.8928s   | 1.37x              |
+| `factor.b`     | 13.4522s    | 4.6786s    | 2.88x              |
+| `golden.b`     | 0.1758s     | 0.1356s    | 1.3x               |
+| `hanoi.b`      | 13.5071s    | 0.5665s    | 23.84x             |
+| `mandelbrot.b` | 21.9095s    | 6.2807s    | 3.49x              |
+| `numwarp.b`    | 0.0022s     | 0.0021s    | 1.05x              |
+| `sierpinski.b` | 0.0028s     | 0.0017s    | 1.65x              |
+
+Optimisations can be disabled by setting the `NO_OPT` environment variable (the value does not matter).
 
 # Benchmark
 
-The example programs can be benchmarked with the [`bench/bench.sh`](bench/bench.sh) script. It requires the path to the interpreter or compiler binary as an argument.
+The example programs can be benchmarked with the [`bench/bench.sh`](bench/bench.sh) script. It requires the path to the interpreter or compiler binary as an argument. The script also conveniently prints the table present above :)
 
 # License
 

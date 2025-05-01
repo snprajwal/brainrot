@@ -21,21 +21,35 @@ if [[ ! -x "$BINARY" ]]; then
     exit 1
 fi
 
-# Function to run a single test
+# Temp files for storing results
+OPTIMISED_RESULTS=$(mktemp)
+UNOPTIMISED_RESULTS=$(mktemp)
+EXAMPLES_LIST=$(mktemp)
+
+# Function to run a single test with or without optimisations
 run_test() {
     local example_file="$1"
+    local optimised="$2"
+    local results_file="$3"
     local filename=$(basename "$example_file" .b)
     local input_file="$INPUT_DIR/$filename.in"
     local expected_file="$EXPECTED_DIR/$filename.out"
     local output_file="$(mktemp)"
-
-    echo -n "$filename: "
 
     # Determine if there is an input file to provide as stdin
     if [[ -f "$input_file" ]]; then
         input_redirect="< \"$input_file\""
     else
         input_redirect=""
+    fi
+
+    # Set or unset NO_OPT environment variable based on optimised flag
+    if [[ "$optimised" == "false" ]]; then
+        export NO_OPT=1
+        echo -n "$filename (unoptimised): "
+    else
+        unset NO_OPT
+        echo -n "$filename (optimised): "
     fi
 
     start_time=$(date +%s.%N)
@@ -46,6 +60,8 @@ run_test() {
         echo -e "\033[91mERROR\033[0m"
         cat "$output_file.stderr"
         rm "$output_file" "$output_file.stderr"
+        # Mark as failed in results
+        echo "$filename -1" >> "$results_file"
         return
     fi
 
@@ -56,14 +72,20 @@ run_test() {
     if [[ -f "$expected_file" ]]; then
         if diff -q "$output_file" "$expected_file" > /dev/null; then
             echo -e "\033[92m\033[1mSUCCESS\033[0m \033[92m(Time: ${elapsed_time}s)\033[0m"
+            # Write results to file: filename elapsed_time
+            echo "$filename $elapsed_time" >> "$results_file"
         else
             echo -e "\033[91m\033[1mFAILURE\033[0m \033[91m(Time: ${elapsed_time}s)\033[0m"
             echo "  Output differs from expected:"
             diff "$output_file" "$expected_file"
+            # Mark as failed in results
+            echo "$filename -1" >> "$results_file"
         fi
     else
         echo -e "\033[91mFAILURE\033[0m (Time: ${elapsed_time}s)"
         echo "  Expected output file '$expected_file' not found."
+        # Mark as failed in results
+        echo "$filename -1" >> "$results_file"
     fi
 
     # Clean up temporary files
@@ -73,5 +95,39 @@ run_test() {
 export -f run_test
 export BINARY INPUT_DIR EXPECTED_DIR
 
-# Find all brainfuck example files and run tests in parallel
-find "$EXAMPLES_DIR" -name "*.b" | parallel run_test
+# Find all brainfuck example files and store them
+find "$EXAMPLES_DIR" -name "*.b" | sort > "$EXAMPLES_LIST"
+
+echo "Running tests without optimisations..."
+
+cat "$EXAMPLES_LIST" | parallel run_test {} false "$UNOPTIMISED_RESULTS"
+
+echo -e "\nRunning tests with optimisations..."
+
+cat "$EXAMPLES_LIST" | parallel run_test {} true "$OPTIMISED_RESULTS"
+
+
+# Generate markdown table
+echo -e "\n\n| Example        | Unoptimised | Optimised | Improvement factor |"
+echo "|----------------|-------------|-----------|--------------------|"
+
+# Process results and generate table rows
+while read example_file; do
+    filename=$(basename "$example_file" .b)
+    unopt_time=$(grep "^$filename " "$UNOPTIMISED_RESULTS" | awk '{print $2}')
+    opt_time=$(grep "^$filename " "$OPTIMISED_RESULTS" | awk '{print $2}')
+    
+    # Skip if either test failed
+    if [[ "$unopt_time" == "-1" || "$opt_time" == "-1" || -z "$unopt_time" || -z "$opt_time" ]]; then
+        continue
+    fi
+    
+    # Calculate improvement factor
+    improvement=$(printf "%.2f" "$(echo "$unopt_time / $opt_time" | bc -l)")
+    
+    # Format the table row
+    printf "| %-14s | %-11s | %-9s | %-18s |\n" "\`$filename.b\`" "${unopt_time}s" "${opt_time}s" "${improvement}x"
+done < "$EXAMPLES_LIST"
+
+# Clean up temp files
+rm "$OPTIMISED_RESULTS" "$UNOPTIMISED_RESULTS" "$EXAMPLES_LIST"

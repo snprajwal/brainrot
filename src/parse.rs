@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Op {
     Increment(usize),
     Decrement(usize),
@@ -33,7 +33,7 @@ impl TryFrom<char> for Op {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Jump {
     JumpR(usize),
     JumpL(usize),

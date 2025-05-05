@@ -1,12 +1,12 @@
 # Brainrot
 
-An interpreter and (coming soon) optimising compiler for [brainfuck](https://esolangs.org/wiki/Brainfuck), aptly named after the Oxford Word of the Year 2024.
+An optimising interpreter for [brainfuck](https://esolangs.org/wiki/Brainfuck), aptly named after the Oxford Word of the Year 2024.
 
 # Usage
 
-To run the Brainrot REPL, simply execute `cargo run`.
+To run the Brainrot REPL, simply execute `cargo run --release`.
 
-To invoke the interpreter on a `.b` file, pass the file as an argument to the above command, i.e. `cargo run file.b`.
+To invoke the interpreter on a `.b` file, pass the file as an argument to the above command, i.e. `cargo run --release file.b`.
 
 # Getting started
 
@@ -42,9 +42,11 @@ And one that prints `Hello world!`:
 
 The interpreter performs a variety of optimisations before execution:
 
-- Folding consecutive increment or decrement instructions
-- Folding consecutive move instructions
-- Rewriting loops that clear a memory cell (`[-]`) into a single instruction
+- Fold consecutive increment or decrement instructions
+- Fold consecutive move instructions
+- Rewrite loops that clear a memory cell (`[-]`) into a single instruction
+- Remove dead loops (loops at the start of the program or immediately after another loop)
+- Remove trailing instructions after the last debug or display instruction
 
 Significant improvement in execution time is seen for the larger programs, with a **24x** speed-up for `hanoi.b`:
 
@@ -64,6 +66,11 @@ Optimisations can be disabled by setting the `NO_OPT` environment variable (the 
 # Benchmark
 
 The example programs can be benchmarked with the [`bench/bench.sh`](bench/bench.sh) script. It requires the path to the interpreter or compiler binary as an argument. The script also conveniently prints the table present above :)
+
+```sh
+cargo build --release && \
+bench/bench.sh target/release/bri
+```
 
 # License
 
